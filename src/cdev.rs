@@ -1,5 +1,5 @@
+use gpio_cdev::{Chip, Line, LineRequestFlags};
 use std::{thread, time};
-use gpio_cdev::{Chip, LineRequestFlags, Line};
 
 const LOW: u8 = 0;
 const HIGH: u8 = 1;
@@ -11,10 +11,9 @@ fn get_line(gpio_number: u32) -> Line {
 }
 
 fn do_init(line: &Line) {
-    let output = line.request(
-        LineRequestFlags::OUTPUT,
-        HIGH,
-        "pull-down").unwrap();
+    let output = line
+        .request(LineRequestFlags::OUTPUT, HIGH, "pull-down")
+        .unwrap();
     // https://cdn-shop.adafruit.com/datasheets/Digital+humidity+and+temperature+sensor+AM2302.pdf
     // Step 1: MCU send out start signal to AM2302 and AM2302 send response signal to MCU
     // MCU will pull low data-bus and this process must beyond at least 1~10ms
@@ -37,10 +36,12 @@ struct Event {
 
 impl Event {
     pub fn new(timestamp: time::Instant, event_type: EvenType) -> Self {
-        Event { timestamp, event_type }
+        Event {
+            timestamp,
+            event_type,
+        }
     }
 }
-
 
 fn events_to_data(events: &[Event]) -> Vec<u8> {
     events
@@ -58,7 +59,6 @@ fn events_to_data(events: &[Event]) -> Vec<u8> {
             if elapsed.unwrap().as_micros() > 35 { 1 } else { 0 }
         }).collect()
 }
-
 
 pub fn push_pull(gpio_number: u32) -> Vec<u8> {
     let line = get_line(gpio_number);

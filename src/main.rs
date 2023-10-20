@@ -1,11 +1,10 @@
-mod binutils;
 mod am2302;
+mod binutils;
 mod cdev;
 
-use std::{thread, time};
-use cdev::push_pull;
 use am2302::Reading;
-
+use cdev::push_pull;
+use std::{thread, time};
 
 fn try_read(gpio_number: u32) -> Option<Reading> {
     let mut final_result = None;
