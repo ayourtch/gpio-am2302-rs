@@ -4,6 +4,7 @@ mod cdev;
 
 use am2302::Reading;
 use cdev::push_pull;
+use std::sync::{Arc, Mutex};
 use std::{thread, time};
 
 fn try_read(gpio_number: u32) -> Option<Reading> {
@@ -31,15 +32,40 @@ fn try_read(gpio_number: u32) -> Option<Reading> {
 fn main() {
     let gpio_number = 4; // GPIO4  (7)
     let sleep_time = time::Duration::from_secs(1);
-    loop {
-        println!(
-            "Sleeping for another {:?}, to be sure that device is ready",
-            sleep_time
-        );
-        thread::sleep(sleep_time);
-        match try_read(gpio_number) {
-            Some(reading) => println!("Reading: {:?}", reading),
-            None => println!("Unable to get the data"),
+    let shared_data = Arc::new(Mutex::new((0.0f32, 0.0f32, time::Instant::now())));
+
+    let writer_shared_data = Arc::clone(&shared_data);
+    let writer_handle = thread::spawn(move || {
+        let mut count = 0.0;
+        loop {
+            match try_read(gpio_number) {
+                Some(reading) => {
+                    println!("Reading: {:?}", reading);
+                    // Lock the Mutex and update the float values.
+                    if let Ok((mut locked_data)) = writer_shared_data.lock() {
+                        let now = time::Instant::now();
+                        *locked_data = (reading.temperature, reading.humidity, now);
+                        println!("Writer updated values to: {:?}", locked_data);
+                    } else {
+                        println!("writer not lock!");
+                    }
+                }
+                None => println!("Unable to get the data"),
+            }
+            println!(
+                "Sleeping for another {:?}, to be sure that device is ready",
+                sleep_time
+            );
+            thread::sleep(sleep_time);
         }
+    });
+
+    let reader_shared_data = Arc::clone(&shared_data);
+    loop {
+        {
+            let locked_data = reader_shared_data.lock().unwrap();
+            println!("Reader got values: {:?}", locked_data);
+        }
+        thread::sleep(sleep_time);
     }
 }

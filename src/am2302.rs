@@ -2,8 +2,8 @@ use crate::binutils::{convert, ConversionError};
 
 #[derive(Debug, PartialEq)]
 pub struct Reading {
-    temperature: f32,
-    humidity: f32,
+    pub temperature: f32,
+    pub humidity: f32,
 }
 
 #[derive(Debug, PartialEq)]
