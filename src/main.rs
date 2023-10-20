@@ -29,10 +29,13 @@ fn try_read(gpio_number: u32) -> Option<Reading> {
 }
 
 fn main() {
-    let gpio_number = 4;  // GPIO4  (7)
-    let sleep_time = time::Duration::from_secs(5);
-    for _ in 1..30 {
-        println!("Sleeping for another {:?}, to be sure that device is ready", sleep_time);
+    let gpio_number = 4; // GPIO4  (7)
+    let sleep_time = time::Duration::from_secs(1);
+    loop {
+        println!(
+            "Sleeping for another {:?}, to be sure that device is ready",
+            sleep_time
+        );
         thread::sleep(sleep_time);
         match try_read(gpio_number) {
             Some(reading) => println!("Reading: {:?}", reading),

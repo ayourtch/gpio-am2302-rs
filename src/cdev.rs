@@ -19,7 +19,7 @@ fn do_init(line: &Line) {
     // MCU will pull low data-bus and this process must beyond at least 1~10ms
     // to ensure AM2302 could detect MCU's signal
     output.set_value(LOW).unwrap();
-    thread::sleep(time::Duration::from_millis(3));
+    thread::sleep(time::Duration::from_millis(5));
 }
 
 #[derive(Debug, PartialEq)]
@@ -56,24 +56,29 @@ fn events_to_data(events: &[Event]) -> Vec<u8> {
         })
         .filter(|&d| d.is_some())
         .map(|elapsed| {
-            if elapsed.unwrap().as_micros() > 35 { 1 } else { 0 }
-        }).collect()
+            if elapsed.unwrap().as_micros() > 45 {
+                1
+            } else {
+                0
+            }
+        })
+        .collect()
 }
 
 pub fn push_pull(gpio_number: u32) -> Vec<u8> {
     let line = get_line(gpio_number);
     let mut events: Vec<Event> = Vec::with_capacity(MAX_NUMBER_OF_READINGS);
-    let contact_time = time::Duration::from_secs(10);
+    let contact_time = time::Duration::from_secs(3);
     do_init(&line);
     read_events(&line, &mut events, contact_time);
     events_to_data(&events)
 }
 
 fn read_events(line: &Line, events: &mut Vec<Event>, contact_time: time::Duration) {
-    let input = line.request(
-        LineRequestFlags::INPUT,
-        HIGH,
-        "read-data").unwrap();
+    let input = line
+        .request(LineRequestFlags::INPUT, HIGH, "read-data")
+        .unwrap();
+    thread::sleep(time::Duration::from_micros(40));
 
     let mut last_state = input.get_value().unwrap();
     let start = time::Instant::now();
