@@ -6,3 +6,4 @@ edition = "2018"
 
 [dependencies]
 gpio-cdev = "0.2"
+tiny_http = "0.11"

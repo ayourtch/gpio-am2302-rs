@@ -6,6 +6,7 @@ use am2302::Reading;
 use cdev::push_pull;
 use std::sync::{Arc, Mutex};
 use std::{thread, time};
+use tiny_http::{Response, Server};
 
 fn try_read(gpio_number: u32) -> Option<Reading> {
     let mut final_result = None;
@@ -60,12 +61,20 @@ fn main() {
         }
     });
 
+    let server = Server::http("0.0.0.0:8000").unwrap();
+
     let reader_shared_data = Arc::clone(&shared_data);
-    loop {
-        {
-            let locked_data = reader_shared_data.lock().unwrap();
-            println!("Reader got values: {:?}", locked_data);
-        }
-        thread::sleep(sleep_time);
+    for request in server.incoming_requests() {
+        println!(
+            "received request! method: {:?}, url: {:?}, headers: {:?}",
+            request.method(),
+            request.url(),
+            request.headers()
+        );
+
+        let locked_data = reader_shared_data.lock().unwrap();
+        let resp = format!("Reader got values: {:?}", locked_data);
+        let response = Response::from_string(&format!("{}\n", &resp));
+        let _ = request.respond(response);
     }
 }
